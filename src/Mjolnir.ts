@@ -27,6 +27,7 @@ import { IProtection } from "./protections/IProtection";
 import { PROTECTIONS } from "./protections/protections";
 import { AutomaticRedactionQueue } from "./queues/AutomaticRedactionQueue";
 import { Healthz } from "./health/healthz";
+import { isTrueJoinEvent } from "./utils";
 
 export const STATE_NOT_STARTED = "not_started";
 export const STATE_CHECKING_PERMISSIONS = "checking_permissions";
@@ -546,6 +547,23 @@ export class Mjolnir {
             if (ALL_RULE_TYPES.includes(event['type'])) {
                 await this.syncListForRoom(roomId);
             }
+        }
+
+        if (event['type'] === 'm.room.member' && roomId == config.landingRoom && isTrueJoinEvent(event)) {
+            const eventPermalink = Permalinks.forEvent(roomId, event['event_id']);
+            const joinedUsers = await this.client.getJoinedRoomMembers(config.notifyRoom);
+            const names = joinedUsers.join(' ');
+            const fmtName = x => `<a href="https://matrix.to/#/${x}">${x}</a>`;
+            const hnames = joinedUsers.map(fmtName).join(' ');
+            const text = `${eventPermalink}\n${event['sender']} joined the landing room\n${names}`;
+            const html = `<a href="${eventPermalink}">landing</a> -> ${event['sender']} joined\n${hnames}`;
+            const message = {
+              msgtype: "m.text",
+              body: text,
+              format: "org.matrix.custom.html",
+              formatted_body: html,
+            };
+            await this.client.sendMessage(config.notifyRoom, message);
         }
 
         if (Object.keys(this.protectedRooms).includes(roomId)) {

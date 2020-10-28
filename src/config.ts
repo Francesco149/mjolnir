@@ -30,6 +30,8 @@ interface IConfig {
     autojoinOnlyIfManager: boolean;
     recordIgnoredInvites: boolean;
     managementRoom: string;
+    landingRoom: string;
+    notifyRoom: string;
     verboseLogging: boolean;
     logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR";
     syncOnStartup: boolean;
@@ -76,6 +78,8 @@ const defaultConfig: IConfig = {
     autojoinOnlyIfManager: false,
     recordIgnoredInvites: false,
     managementRoom: "!noop:example.org",
+    landingRoom: "!noop:example.org",
+    notifyRoom: "!noop:example.org",
     verboseLogging: false,
     logLevel: "INFO",
     syncOnStartup: true,
