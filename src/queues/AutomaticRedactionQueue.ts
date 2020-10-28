@@ -46,6 +46,7 @@ export class AutomaticRedactionQueue {
                 logMessage(LogLevel.WARN, "AutomaticRedactionQueue", `Unable to redact message: ${permalink}`);
                 LogService.warn("AutomaticRedactionQueue", e);
             }
+            this.usersToRedact.delete(event['sender']);
         }
     }
 }
