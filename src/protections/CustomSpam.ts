@@ -34,7 +34,8 @@ export class CustomSpam implements IProtection {
       LogService.warn("CustomSpam", `${event['event_id']} is more than ${TIMESTAMP_THRESHOLD}ms out of phase - rewriting event time to be 'now'`);
       event['origin_server_ts'] = (new Date()).getTime();
     }
-    let redact = async (r, e = event) => mjolnir.client.redactEvent(roomId, e['event_id'], r);
+    let redact = async (r, e = event) =>
+      await mjolnir.client.redactEvent(roomId, e['event_id'], r);
     if (getMsgType(event) == 'm.file')
       await redact("sorry, file uploads are not allowed");
 
