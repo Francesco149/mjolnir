@@ -10,6 +10,8 @@ const banwords = [
   [["fuck"], ["john", "franc", "linux"]],
 ];
 
+let getMsgType = x => (x['content'] || {})['msgtype'] || 'm.text';
+
 export class CustomSpam implements IProtection {
 
   private lastEvents: { [roomId: string]: { [userId: string]: any[] } } = {};
@@ -32,6 +34,9 @@ export class CustomSpam implements IProtection {
       LogService.warn("CustomSpam", `${event['event_id']} is more than ${TIMESTAMP_THRESHOLD}ms out of phase - rewriting event time to be 'now'`);
       event['origin_server_ts'] = (new Date()).getTime();
     }
+    let redact = async (r, e = event) => mjolnir.client.redactEvent(roomId, e['event_id'], r);
+    if (getMsgType(event) == 'm.file')
+      await redact("sorry, file uploads are not allowed");
 
     forUser.push(event);
 
@@ -41,14 +46,12 @@ export class CustomSpam implements IProtection {
       }
       await logMessage(LogLevel.WARN, "CustomSpam", `Muting ${event['sender']} in ${roomId} for ${reason}`, roomId);
       //await mjolnir.client.setUserPowerLevel(event['sender'], roomId, -1)
-      await mjolnir.client.banUser(event['sender'], roomId, "spam");
 
       mjolnir.redactionHandler.addUser(event['sender']);
 
       if (!config.noop) {
-        for (const eventId of forUser.map(e => e.eventId)) {
-          await mjolnir.client.redactEvent(roomId, eventId, "spam");
-        }
+        for (const e of forUser)
+          await redact("spam", e);
       } else {
         await logMessage(LogLevel.WARN, "CustomSpam", `Tried to redact messages for ${event['sender']} in ${roomId} but Mjolnir is running in no-op mode`, roomId);
       }
