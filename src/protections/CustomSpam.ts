@@ -12,7 +12,7 @@ const banwords = [
 
 export class CustomSpam implements IProtection {
 
-  private lastEvents: { [roomId: string]: { [userId: string]: { originServerTs: number, eventId: string }[] } } = {};
+  private lastEvents: { [roomId: string]: { [userId: string]: any[] } } = {};
 
   constructor() {
   }
@@ -33,7 +33,7 @@ export class CustomSpam implements IProtection {
       event['origin_server_ts'] = (new Date()).getTime();
     }
 
-    forUser.push({originServerTs: event['origin_server_ts'], eventId: event['event_id']});
+    forUser.push(event);
 
     let ban = async (reason: string) => {
       if (!await mjolnir.client.userHasPowerLevelFor(event['sender'], roomId, "m.room.message", false)) {
@@ -75,9 +75,9 @@ export class CustomSpam implements IProtection {
     let bigCount = 0;
     let mediaCount = 0;
     for (const prevEvent of forUser) {
-      if ((new Date()).getTime() - prevEvent.originServerTs > 60000) continue; // not important
+      if ((new Date()).getTime() - prevEvent['origin_server_ts'] > 60000) continue; // not important
       messageCount++;
-      const content = event['content'] || {};
+      const content = prevEvent['content'] || {};
       const msgtype = content['msgtype'] || 'm.text';
       const body = content['body'] || '';
       const formattedBody = content['formatted_body'] || '';
