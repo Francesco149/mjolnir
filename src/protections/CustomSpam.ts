@@ -46,13 +46,13 @@ export class CustomSpam implements IProtection {
         return;
       }
       await logMessage(LogLevel.WARN, "CustomSpam", `Muting ${event['sender']} in ${roomId} for ${reason}`, roomId);
-      //await mjolnir.client.setUserPowerLevel(event['sender'], roomId, -1)
+      await mjolnir.client.setUserPowerLevel(event['sender'], roomId, -1)
 
       mjolnir.redactionHandler.addUser(event['sender']);
 
       if (!config.noop) {
         for (const e of forUser)
-          await redact("spam", e);
+          await redact("(autoban) spam. ask a mod if you think it was a mistake", e);
       } else {
         await logMessage(LogLevel.WARN, "CustomSpam", `Tried to redact messages for ${event['sender']} in ${roomId} but Mjolnir is running in no-op mode`, roomId);
       }
@@ -91,8 +91,8 @@ export class CustomSpam implements IProtection {
     }
 
     messageCount >= 15 && await ban(`flood (${messageCount} messages in the last minute)`);
-    bigCount >= 5    && await ban(`copypasta (${bigCount} big messages in the last minute)`);
-    mediaCount >= 5  && await ban(`media flood (${mediaCount} media in the last minute)`);
+    bigCount >= 7      && await ban(`copypasta (${bigCount} big messages in the last minute)`);
+    mediaCount >= 5    && await ban(`media flood (${mediaCount} media in the last minute)`);
 
     if (forUser.length > 30) {
       forUser.splice(0, forUser.length - 30 - 1);
