@@ -36,7 +36,7 @@ export class CustomSpam implements IProtection {
     }
     let redact = async (r, e = event) =>
       await mjolnir.client.redactEvent(roomId, e['event_id'], r);
-    if (getMsgType(event) == 'm.file')
+    if (getMsgType(event) == 'm.file' || getMsgType(event) == 'm.audio')
       await redact("sorry, file uploads are not allowed");
 
     forUser.push(event);
@@ -45,20 +45,26 @@ export class CustomSpam implements IProtection {
       if (!await mjolnir.client.userHasPowerLevelFor(event['sender'], roomId, "m.room.message", false)) {
         return;
       }
+      let oldForUser = forUser;
+      forUser = forRoom[event['sender']] = [];
       await logMessage(LogLevel.WARN, "CustomSpam", `Muting ${event['sender']} in ${roomId} for ${reason}`, roomId);
+      for (const e of oldForUser.slice(0, 10)) {
+        try {
+          await mjolnir.client.sendMessage(config.managementRoom, e['content']);
+        } catch (e) {
+          // idk
+        }
+      }
       await mjolnir.client.setUserPowerLevel(event['sender'], roomId, -1)
 
       mjolnir.redactionHandler.addUser(event['sender']);
 
       if (!config.noop) {
-        for (const e of forUser)
+        for (const e of oldForUser)
           await redact("(autoban) spam. ask a mod if you think it was a mistake", e);
       } else {
         await logMessage(LogLevel.WARN, "CustomSpam", `Tried to redact messages for ${event['sender']} in ${roomId} but Mjolnir is running in no-op mode`, roomId);
       }
-
-      this.lastEvents[roomId];
-      forUser = forRoom[event['sender']] = [];
     };
 
     let checkBanWords = str => {
