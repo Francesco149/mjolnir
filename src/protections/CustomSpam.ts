@@ -48,7 +48,8 @@ export class CustomSpam implements IProtection {
       let oldForUser = forUser;
       forUser = forRoom[event['sender']] = [];
       await logMessage(LogLevel.WARN, "CustomSpam", `Muting ${event['sender']} in ${roomId} for ${reason}`, roomId);
-      for (const e of oldForUser.slice(0, 10)) {
+      for (const e of oldForUser) {
+        if ((new Date()).getTime() - e['origin_server_ts'] > 60000) continue; // not important
         try {
           await mjolnir.client.sendMessage(config.managementRoom, e['content']);
         } catch (e) {
